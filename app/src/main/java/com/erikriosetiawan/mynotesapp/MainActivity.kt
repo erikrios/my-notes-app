@@ -2,6 +2,7 @@ package com.erikriosetiawan.mynotesapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.EXTRA_NOTE
@@ -14,12 +15,18 @@ import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_UPD
 import com.erikriosetiawan.mynotesapp.adapter.NoteAdapter
 import com.erikriosetiawan.mynotesapp.databinding.ActivityMainBinding
 import com.erikriosetiawan.mynotesapp.entity.Note
+import com.erikriosetiawan.mynotesapp.helper.MappingHelper
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: NoteAdapter
     private lateinit var binding: ActivityMainBinding
+    private lateinit var noteHelper: NoteHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +44,15 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, NoteAddUpdateActivity::class.java)
             startActivityForResult(intent, REQUEST_ADD)
         }
+
+        noteHelper = NoteHelper.getInstance(applicationContext)
+        noteHelper.open()
+        loadNotesAsync()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        noteHelper.close()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -69,6 +85,24 @@ class MainActivity : AppCompatActivity() {
                             showSnackbarMessage("Satu item berhasil dihapus")
                         }
                     }
+            }
+        }
+    }
+
+    private fun loadNotesAsync() {
+        GlobalScope.launch(Dispatchers.Main) {
+            binding.progressBar.visibility = View.VISIBLE
+            val deferredNotes = async(Dispatchers.IO) {
+                val cursor = noteHelper.queryAll()
+                MappingHelper.mapCursorToArrayList(cursor)
+            }
+            binding.progressBar.visibility = View.INVISIBLE
+            val notes = deferredNotes.await()
+            if (notes.size > 0) {
+                adapter.listNotes = notes
+            } else {
+                adapter.listNotes = ArrayList()
+                showSnackbarMessage("Tidak ada data saat ini")
             }
         }
     }
