@@ -17,10 +17,10 @@ class NoteAdapter(private val activity: Activity) :
 
     var listNotes = ArrayList<Note>()
         set(listNotes) {
-            if (listNotes.size > 0) {
-                listNotes.clear()
+            if (this.listNotes.size > 0) {
+                this.listNotes.clear()
             }
-            listNotes.addAll(listNotes)
+            this.listNotes.addAll(listNotes)
 
             notifyDataSetChanged()
         }

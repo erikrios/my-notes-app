@@ -2,6 +2,7 @@ package com.erikriosetiawan.mynotesapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -117,6 +118,7 @@ class MainActivity : AppCompatActivity() {
             val notes = deferredNotes.await()
             if (notes.size > 0) {
                 adapter.listNotes = notes
+                Log.i("TES123", adapter.listNotes.toString())
             } else {
                 adapter.listNotes = ArrayList()
                 showSnackbarMessage("Tidak ada data saat ini")
