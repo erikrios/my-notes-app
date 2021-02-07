@@ -23,4 +23,17 @@ object MappingHelper {
         }
         return noteList
     }
+
+    fun mapCursorToObject(notesCursor: Cursor?): Note {
+        var note = Note()
+        notesCursor?.apply {
+            moveToFirst()
+            val id = getInt(getColumnIndexOrThrow(_ID))
+            val title = getString(getColumnIndexOrThrow(TITLE))
+            val description = getString(getColumnIndexOrThrow(DESCRIPTION))
+            val date = getString(getColumnIndexOrThrow(DATE))
+            note = note.copy(id = id, title = title, description = description, date = date)
+        }
+        return note
+    }
 }
