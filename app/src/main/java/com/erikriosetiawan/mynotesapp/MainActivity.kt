@@ -1,7 +1,10 @@
 package com.erikriosetiawan.mynotesapp
 
 import android.content.Intent
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +18,7 @@ import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_DEL
 import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_UPDATE
 import com.erikriosetiawan.mynotesapp.adapter.NoteAdapter
 import com.erikriosetiawan.mynotesapp.databinding.ActivityMainBinding
+import com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.Companion.CONTENT_URI
 import com.erikriosetiawan.mynotesapp.entity.Note
 import com.erikriosetiawan.mynotesapp.helper.MappingHelper
 import com.google.android.material.snackbar.Snackbar
@@ -27,7 +31,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: NoteAdapter
     private lateinit var binding: ActivityMainBinding
-    private lateinit var noteHelper: NoteHelper
 
     companion object {
         private const val EXTRA_STATE = "extra_state"
@@ -50,15 +53,23 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, REQUEST_ADD)
         }
 
-        noteHelper = NoteHelper.getInstance(applicationContext)
-        noteHelper.open()
+        val handlerThread = HandlerThread("DataObserver")
+        handlerThread.start()
+        val handler = Handler(handlerThread.looper)
+
+        val myObserver = object : ContentObserver(handler) {
+            override fun onChange(selfChange: Boolean) {
+                loadNotesAsync()
+            }
+        }
+
+        contentResolver.registerContentObserver(CONTENT_URI, true, myObserver)
 
         if (savedInstanceState == null) {
             loadNotesAsync()
         } else {
-            val list = savedInstanceState.getParcelableArrayList<Note>(EXTRA_STATE)
-            if (list != null) {
-                adapter.listNotes = list
+            savedInstanceState.getParcelableArrayList<Note>(EXTRA_STATE)?.also {
+                adapter.listNotes = it
             }
         }
     }
@@ -70,7 +81,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        noteHelper.close()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -111,14 +121,14 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.Main) {
             binding.progressBar.visibility = View.VISIBLE
             val deferredNotes = async(Dispatchers.IO) {
-                val cursor = noteHelper.queryAll()
+                // CONTENT_URI = content://com.erikriosetiawan.mynotesapp/note
+                val cursor = contentResolver.query(CONTENT_URI, null, null, null, null)
                 MappingHelper.mapCursorToArrayList(cursor)
             }
-            binding.progressBar.visibility = View.INVISIBLE
             val notes = deferredNotes.await()
+            binding.progressBar.visibility = View.INVISIBLE
             if (notes.size > 0) {
                 adapter.listNotes = notes
-                Log.i("TES123", adapter.listNotes.toString())
             } else {
                 adapter.listNotes = ArrayList()
                 showSnackbarMessage("Tidak ada data saat ini")
