@@ -72,10 +72,6 @@ class MainActivity : AppCompatActivity() {
         outState.putParcelableArrayList(EXTRA_STATE, adapter.listNotes)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     private fun loadNotesAsync() {
         GlobalScope.launch(Dispatchers.Main) {
             binding.progressBar.visibility = View.VISIBLE
