@@ -21,4 +21,8 @@
         </activity>
     </application>
 
+    <queries>
+        <package android:name="com.erikriosetiawan.mynotesapp" />
+    </queries>
+
 </manifest>
