@@ -5,17 +5,10 @@ import android.database.ContentObserver
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.EXTRA_NOTE
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.EXTRA_POSITION
 import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.REQUEST_ADD
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.REQUEST_UPDATE
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_ADD
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_DELETE
-import com.erikriosetiawan.mynotesapp.NoteAddUpdateActivity.Companion.RESULT_UPDATE
 import com.erikriosetiawan.mynotesapp.adapter.NoteAdapter
 import com.erikriosetiawan.mynotesapp.databinding.ActivityMainBinding
 import com.erikriosetiawan.mynotesapp.db.DatabaseContract.NoteColumns.Companion.CONTENT_URI
@@ -81,40 +74,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (data != null) {
-            when (requestCode) {
-                REQUEST_ADD -> if (resultCode == RESULT_ADD) {
-                    val note = data.getParcelableExtra<Note>(EXTRA_NOTE) as Note
-
-                    adapter.addItem(note)
-                    binding.rvNotes.smoothScrollToPosition(adapter.itemCount - 1)
-
-                    showSnackbarMessage("Satu item berhasil ditambahkan")
-                }
-                REQUEST_UPDATE ->
-                    when (resultCode) {
-                        RESULT_UPDATE -> {
-                            val note = data.getParcelableExtra<Note>(EXTRA_NOTE) as Note
-                            val position = data.getIntExtra(EXTRA_POSITION, 0)
-
-                            adapter.updateItem(position, note)
-                            binding.rvNotes.smoothScrollToPosition(position)
-
-                            showSnackbarMessage("Satu item berhasil diubah")
-                        }
-                        RESULT_DELETE -> {
-                            val position = data.getIntExtra(EXTRA_POSITION, 0)
-                            adapter.removeItem(position)
-                            showSnackbarMessage("Satu item berhasil dihapus")
-                        }
-                    }
-            }
-        }
     }
 
     private fun loadNotesAsync() {
